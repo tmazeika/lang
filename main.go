@@ -405,8 +405,34 @@ func consumeEqualityExpr(tokens []token) (interface{}, int) {
 	return expr, i
 }
 
+func consumeLandExpr(tokens []token) (interface{}, int) {
+	i := 0
+	expr, adv := consumeEqualityExpr(tokens)
+	i += adv
+	if tokens[i].kind == land {
+		i++
+		right, adv2 := consumeEqualityExpr(tokens[i:])
+		i += adv2
+		expr = binaryOp{expr, land, right}
+	}
+	return expr, i
+}
+
+func consumeLorExpr(tokens []token) (interface{}, int) {
+	i := 0
+	expr, adv := consumeLandExpr(tokens)
+	i += adv
+	if tokens[i].kind == lor {
+		i++
+		right, adv2 := consumeLandExpr(tokens[i:])
+		i += adv2
+		expr = binaryOp{expr, lor, right}
+	}
+	return expr, i
+}
+
 func consumeExpr(tokens []token) (interface{}, int) {
-	return consumeEqualityExpr(tokens)
+	return consumeLorExpr(tokens)
 }
 
 func consumeStmt(tokens []token) (interface{}, int) {
