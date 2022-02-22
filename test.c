@@ -1,6 +1,11 @@
-int main(int argc, char argv) {
-  char s = "world";
+int main(int argc, rune argv) {
+  string s = "world";
+  int a = 5;
+  bool z = true;
   // hello world!!!!!!
-  sys.printf("Hello, %s\n", s, true || true && false)();
-  return 0.09;
+  //sys.printf("Hello, %s\n", s);
+  if (z) {
+    return 5;
+  }
+  return 1;
 }

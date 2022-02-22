@@ -83,43 +83,43 @@ func (p *Parser) previous() scanner.Token {
 	return p.Tokens[p.i-1]
 }
 
-func (p *Parser) consumeAtomExpr() expr {
+func (p *Parser) consumeAtomExpr() Expr {
 	if p.matchKeyword("true") {
 		p.consumeOne()
-		return literalBool{true}
+		return LiteralBool{true}
 	} else if p.matchKeyword("false") {
 		p.consumeOne()
-		return literalBool{false}
+		return LiteralBool{false}
 	} else if p.matchKeyword("null") {
 		p.consumeOne()
-		return literalNull{}
+		return LiteralNull{}
 	}
 	t := p.peek()
 	if t.Kind == scanner.Str {
 		p.consumeOne()
-		return literalStr{t.Lexeme}
+		return LiteralStr{t.Lexeme}
 	} else if t.Kind == scanner.Num {
 		p.consumeOne()
-		return literalNum{t.Lexeme}
+		return LiteralNum{t.Lexeme}
 	} else if t.Kind == scanner.LParen {
 		return p.consumeGroupExpr()
 	} else if t.Kind == scanner.Ident {
 		p.consumeOne()
-		return identExpr{t}
+		return IdentExpr{t}
 	} else {
 		panic("Unknown atom")
 	}
 }
 
-func (p *Parser) consumeCallExpr() expr {
+func (p *Parser) consumeCallExpr() Expr {
 	e := p.consumeAtomExpr()
 	for {
 		if p.match(scanner.Dot) {
 			p.consumeOne()
-			e = memberAccess{e, p.consume(scanner.Ident, "Expected member name")}
+			e = MemberAccess{e, p.consume(scanner.Ident, "Expected member name")}
 		} else if p.match(scanner.LParen) {
 			p.consumeOne()
-			var args []expr
+			var args []Expr
 			for !p.match(scanner.RParen) {
 				arg := p.consumeExpr()
 				args = append(args, arg)
@@ -130,7 +130,7 @@ func (p *Parser) consumeCallExpr() expr {
 				}
 			}
 			p.consumeOne()
-			e = functionCall{e, args}
+			e = FunctionCall{e, args}
 		} else {
 			break
 		}
@@ -138,81 +138,81 @@ func (p *Parser) consumeCallExpr() expr {
 	return e
 }
 
-func (p *Parser) consumeUnaryExpr() expr {
+func (p *Parser) consumeUnaryExpr() Expr {
 	if p.match(scanner.Minus, scanner.LNot) {
 		op := p.consumeOne()
 		e := p.consumeUnaryExpr()
-		return unaryOp{op, e}
+		return UnaryOp{op, e}
 	} else {
 		return p.consumeCallExpr()
 	}
 }
 
-func (p *Parser) consumeFactorExpr() expr {
+func (p *Parser) consumeFactorExpr() Expr {
 	e := p.consumeUnaryExpr()
 	for p.match(scanner.Star, scanner.Slash) {
 		op := p.consumeOne()
 		right := p.consumeUnaryExpr()
-		e = binaryOp{op, e, right}
+		e = BinaryOp{op, e, right}
 	}
 	return e
 }
 
-func (p *Parser) consumeTermExpr() expr {
+func (p *Parser) consumeTermExpr() Expr {
 	e := p.consumeFactorExpr()
 	for p.match(scanner.Plus, scanner.Minus) {
 		op := p.consumeOne()
 		right := p.consumeFactorExpr()
-		e = binaryOp{op, e, right}
+		e = BinaryOp{op, e, right}
 	}
 	return e
 }
 
-func (p *Parser) consumeComparisonExpr() expr {
+func (p *Parser) consumeComparisonExpr() Expr {
 	e := p.consumeTermExpr()
 	for p.match(scanner.Gt, scanner.Gte, scanner.Lt, scanner.Lte) {
 		op := p.consumeOne()
 		right := p.consumeTermExpr()
-		e = binaryOp{op, e, right}
+		e = BinaryOp{op, e, right}
 	}
 	return e
 }
 
-func (p *Parser) consumeEqualityExpr() expr {
+func (p *Parser) consumeEqualityExpr() Expr {
 	e := p.consumeComparisonExpr()
 	for p.match(scanner.EqEq, scanner.Ne) {
 		op := p.consumeOne()
 		right := p.consumeComparisonExpr()
-		e = binaryOp{op, e, right}
+		e = BinaryOp{op, e, right}
 	}
 	return e
 }
 
-func (p *Parser) consumeLAndExpr() expr {
+func (p *Parser) consumeLAndExpr() Expr {
 	e := p.consumeEqualityExpr()
 	for p.match(scanner.LAnd) {
 		op := p.consumeOne()
 		right := p.consumeEqualityExpr()
-		e = binaryOp{op, e, right}
+		e = BinaryOp{op, e, right}
 	}
 	return e
 }
 
-func (p *Parser) consumeLOrExpr() expr {
+func (p *Parser) consumeLOrExpr() Expr {
 	e := p.consumeLAndExpr()
 	for p.match(scanner.LOr) {
 		op := p.consumeOne()
 		right := p.consumeLAndExpr()
-		e = binaryOp{op, e, right}
+		e = BinaryOp{op, e, right}
 	}
 	return e
 }
 
-func (p *Parser) consumeExpr() expr {
+func (p *Parser) consumeExpr() Expr {
 	return p.consumeLOrExpr()
 }
 
-func (p *Parser) consumeGroupExpr() expr {
+func (p *Parser) consumeGroupExpr() Expr {
 	p.consume(scanner.LParen, "Expected '('")
 	e := p.consumeExpr()
 	p.consume(scanner.RParen, "Expected ')'")
@@ -226,12 +226,12 @@ func (p *Parser) consumeIfStmt() Stmt {
 	if p.matchKeyword("else") {
 		p.consumeOne()
 		if p.matchKeyword("if") {
-			return ifStmt{cond, then, block{[]Stmt{p.consumeIfStmt()}}}
+			return IfStmt{cond, then, Block{[]Stmt{p.consumeIfStmt()}}}
 		} else {
-			return ifStmt{cond, then, p.consumeBlock()}
+			return IfStmt{cond, then, p.consumeBlock()}
 		}
 	} else {
-		return ifStmt{cond, then, block{}}
+		return IfStmt{cond, then, Block{}}
 	}
 }
 
@@ -239,14 +239,14 @@ func (p *Parser) consumeWhileStmt() Stmt {
 	p.consumeKeyword("while", "Expected 'while' statement")
 	cond := p.consumeGroupExpr()
 	body := p.consumeBlock()
-	return whileStmt{cond, body}
+	return WhileStmt{cond, body}
 }
 
 func (p *Parser) consumeReturnStmt() Stmt {
 	p.consumeKeyword("return", "Expected 'return' statement")
 	e := p.consumeExpr()
 	p.consume(scanner.Semicolon, "Expected ';' after return statement")
-	return returnStmt{e}
+	return ReturnStmt{e}
 }
 
 func (p *Parser) consumeVarStmt() Stmt {
@@ -254,12 +254,12 @@ func (p *Parser) consumeVarStmt() Stmt {
 	name := p.consume(scanner.Ident, "Expected variable declaration name")
 	if p.match(scanner.Semicolon) {
 		p.consumeOne()
-		return varStmt{kind, name, nil}
+		return VarStmt{kind, name, nil}
 	} else {
 		p.consume(scanner.Eq, "Expected ';' or '=' after variable declaration")
 		e := p.consumeExpr()
 		p.consume(scanner.Semicolon, "Expected ';' after variable initialization")
-		return varStmt{kind, name, e}
+		return VarStmt{kind, name, e}
 	}
 }
 
@@ -268,18 +268,18 @@ func (p *Parser) consumeAssignStmt() Stmt {
 	p.consume(scanner.Eq, "Expected '=' after variable assignment target")
 	e := p.consumeExpr()
 	p.consume(scanner.Semicolon, "Expected ';' after variable assignment")
-	return assignStmt{target, e}
+	return AssignStmt{target, e}
 }
 
 func (p *Parser) consumeFunctionStmt() Stmt {
 	returnKind := p.consume(scanner.Ident, "Expected function return type")
 	name := p.consume(scanner.Ident, "Expected function name")
 	p.consume(scanner.LParen, "Expected function parameters")
-	var params []functionParam
+	var params []FunctionParam
 	for !p.match(scanner.RParen) {
 		pkind := p.consume(scanner.Ident, "Expected function parameter type")
 		pname := p.consume(scanner.Ident, "Expected function parameter name")
-		params = append(params, functionParam{pkind, pname})
+		params = append(params, FunctionParam{pkind, pname})
 		if p.match(scanner.Comma) {
 			p.consumeOne()
 		} else if !p.match(scanner.RParen) {
@@ -288,7 +288,7 @@ func (p *Parser) consumeFunctionStmt() Stmt {
 	}
 	p.consumeOne()
 	body := p.consumeBlock()
-	return functionStmt{returnKind, name, params, body}
+	return FunctionStmt{returnKind, name, params, body}
 }
 
 func (p *Parser) consumeStmt() Stmt {
@@ -329,8 +329,8 @@ func (p *Parser) ConsumeTopLevelStmts() []Stmt {
 	return stmts
 }
 
-func (p *Parser) consumeBlock() block {
-	var blk block
+func (p *Parser) consumeBlock() Block {
+	var blk Block
 	p.consume(scanner.LBrace, "Required block")
 	for !p.match(scanner.RBrace) {
 		// Ignore lone semicolons
@@ -338,7 +338,7 @@ func (p *Parser) consumeBlock() block {
 			p.consumeOne()
 			continue
 		}
-		blk.stmts = append(blk.stmts, p.consumeStmt())
+		blk.Stmts = append(blk.Stmts, p.consumeStmt())
 	}
 	p.consumeOne()
 	return blk

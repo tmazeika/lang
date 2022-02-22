@@ -2,77 +2,77 @@ package parser
 
 import "lang/scanner"
 
-type expr interface{}
+type Expr interface{}
 
 type Stmt interface{}
 
-type block struct {
-	stmts []Stmt
+type Block struct {
+	Stmts []Stmt
 }
 
-type functionParam struct {
-	kind scanner.Token
-	name scanner.Token
+type FunctionParam struct {
+	Kind scanner.Token
+	Name scanner.Token
 }
 
-type functionStmt struct {
-	returnKind scanner.Token
-	name       scanner.Token
-	params     []functionParam
-	body       block
+type FunctionStmt struct {
+	ReturnKind scanner.Token
+	Name       scanner.Token
+	Params     []FunctionParam
+	Body       Block
 }
 
-type returnStmt struct{ expr }
+type ReturnStmt struct{ Expr }
 
-type assignStmt struct {
-	target expr
-	expr
+type AssignStmt struct {
+	Target Expr
+	Expr
 }
 
-type varStmt struct {
-	kind scanner.Token
-	name scanner.Token
-	expr
+type VarStmt struct {
+	Kind scanner.Token
+	Name scanner.Token
+	Expr
 }
 
-type ifStmt struct {
-	cond expr
-	then block
-	els  block
+type IfStmt struct {
+	Cond Expr
+	Then Block
+	Els  Block
 }
 
-type whileStmt struct {
-	cond expr
-	body block
+type WhileStmt struct {
+	Cond Expr
+	Body Block
 }
 
-type memberAccess struct {
-	parent expr
-	name   scanner.Token
+type MemberAccess struct {
+	Parent Expr
+	Name   scanner.Token
 }
 
-type functionCall struct {
-	callee expr
-	args   []expr
+type FunctionCall struct {
+	Callee Expr
+	Args   []Expr
 }
 
-type unaryOp struct {
-	op scanner.Token
-	expr
+type UnaryOp struct {
+	Op scanner.Token
+	Expr
 }
 
-type binaryOp struct {
-	op    scanner.Token
-	left  expr
-	right expr
+type BinaryOp struct {
+	Op    scanner.Token
+	Left  Expr
+	Right Expr
 }
 
-type literalStr struct{ value string }
+type LiteralStr struct{ Value string }
 
-type literalNum struct{ value string }
+type LiteralNum struct{ Value string }
 
-type literalBool struct{ value bool }
+type LiteralBool struct{ Value bool }
 
-type literalNull struct{}
+type LiteralNull struct{}
 
-type identExpr struct{ name scanner.Token }
+type IdentExpr struct{ Name scanner.Token }

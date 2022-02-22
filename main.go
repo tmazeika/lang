@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/kr/pretty"
+	"lang/analysis"
 	"lang/parser"
 	"lang/scanner"
 )
@@ -22,4 +23,5 @@ func main() {
 			panic(err)
 		}
 	}
+	println("Typecheck:", analysis.Check(stmts))
 }
