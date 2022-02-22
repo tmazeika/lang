@@ -229,6 +229,26 @@ func IsType(env Env, node interface{}, expected Type) bool {
 		} else {
 			return true
 		}
+	case parser.FunctionCall:
+		functionType := getType(env, n.Callee)
+		if functionIdent, ok := functionType.(FunctionType); ok {
+			if len(functionIdent.Params) != len(n.Args) {
+				return false
+			}
+			for i := range n.Args {
+				arg := n.Args[i]
+				param := functionIdent.Params[i]
+				if !IsType(env, arg, param) {
+					return false
+				}
+			}
+			if expected != nil {
+				return functionIdent.Return == expected
+			}
+		} else {
+			return false
+		}
+		return true
 	default:
 		return false
 	}

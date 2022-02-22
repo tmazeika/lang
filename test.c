@@ -4,11 +4,16 @@ int main(int argc, int argv) {
   bool z = true;
   if (testVars.someBool) {
   } else {
+    main(5, 5);
   }
   // hello world!!!!!!
   //sys.printf("Hello, %s\n", s);
-  if (z) {
+  if (isTrue()) {
     return 5;
   }
-  return 1;
+  return main(5, 3);
+}
+
+bool isTrue() {
+  return true;
 }
